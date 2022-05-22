@@ -1,3 +1,4 @@
+import java.util.LinkedList;
 import java.util.List;
 
 public class Node<K extends Comparable<K>, V> implements IBTreeNode {
@@ -61,4 +62,58 @@ public class Node<K extends Comparable<K>, V> implements IBTreeNode {
     public void setChildren(List children) {
         this.children = children;
     }
+
+
+    public int search(Comparable key) {
+
+        int start = 0;
+        int end = this.keys.size() ;
+        int mid = 0;
+        while (start != end) {
+
+            mid = (start + end) / 2;
+
+            if (keys.get(mid).equals(key))
+                return mid;
+
+            else if (keys.get(mid).compareTo((K) key) > 0) {
+
+                end = mid;
+                if (mid +1 < keys.size() &&  keys.get(mid + 1).compareTo((K) key) < 0)
+                    return mid;
+
+                }else {
+                    start = mid + 1;
+                    if (mid - 1 > 0 && keys.get(mid - 1).compareTo((K) key) > 0) {
+                        return mid + 1;
+                    }
+
+                }
+            }
+
+
+        return end;
+    }
+
+    public static void main(String[] args) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        }
+
 }
+
+

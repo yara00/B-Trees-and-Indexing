@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,10 +8,14 @@ public class Node<K extends Comparable<K>, V> implements IBTreeNode {
     private List<IBTreeNode> children;
     private List<V> values;
     private List<K> keys;
-    private boolean isLeaf;
+    private boolean isLeaf = true;
 
     public Node(int k) {
         this.childrenNum = k;
+        this.keysNumber = 0;
+        this.children = new ArrayList<>(k);
+        this.values = new ArrayList<>();
+        this.keys = new ArrayList<>();
     }
 
     @Override

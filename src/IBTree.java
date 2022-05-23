@@ -30,5 +30,5 @@ public interface IBTree<K extends Comparable<K>, V> {
 	 * @return
 	 */
 	public boolean delete(K key);
-	
+	public void Show(IBTreeNode x);
 }

@@ -57,12 +57,10 @@ public class Tree implements IBTree{
             node.getChildren().add(i+1, node.getChildren().get(i));
         }
         node.getChildren().add(index+1, newNode);
-        for(int i=node.getNumOfKeys(); i >= index; i--) {
-            if (node.getKeys().size() != 0) {
-                System.out.println("ANNNNNNNNNNNNNNNNNNNNNNNNNNNNNA " + i);
+        for(int i=node.getNumOfKeys()-1; i >= index; i--) {
                 node.getKeys().add(i + 1, node.getKeys().get(i));
                 node.getValues().add(i + 1, node.getValues().get(i));
-            }
+
         }
         node.getKeys().add(index, childAtIndex.getKeys().get(this.minDegree - 1));
         node.getValues().add(index, childAtIndex.getValues().get(this.minDegree - 1));
@@ -126,45 +124,50 @@ public class Tree implements IBTree{
         return false;
     }
 
+
+
     public void Show(IBTreeNode x) {
         assert (x == null);
-        for (int i = 0; i < x.getNumOfKeys(); i++) {
-            System.out.print(x.getKeys().get(i) + " ");
-            System.out.print(x.getValues().get(i) + " ");
-        }
-        if (!x.isLeaf()) {
-            for (int i = 0; i < x.getNumOfKeys() + 1; i++) {
-                    Show((IBTreeNode) x.getChildren().get(i));
+        int i;
+        for ( i = 0; i < x.getNumOfKeys(); i++){
+            if(!x.isLeaf()){
+                Show((IBTreeNode) x.getChildren().get(i));
             }
+            System.out.print(" " +x.getKeys().get(i));
+            System.out.print(" " + x.getValues().get(i));
+        }
+        if(!x.isLeaf()){
+            Show((IBTreeNode) x.getChildren().get(i));
         }
     }
     public static void main(String[] args) {
         IBTree tree = new Tree(2);
-        tree.insert(100, "toto");
+        tree.insert(100, "tt");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(2, "soso");
+        tree.insert(2, "uu");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(32, "yaryora");
+        tree.insert(32, "y");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(3, "lolo");
+        tree.insert(3, "l");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(500, "yaryora");
+        tree.insert(500, "yy");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(14, "yaryora");
+        tree.insert(14, "rr");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(870, "yaryora");
+        tree.insert(870, "p");
         tree.Show(tree.getRoot());
-       /* tree.insert(5, "marioma");
-        tree.insert(50, "yaryora");
-        tree.insert(1, "marioma");
-        tree.insert(99, "yaryora");
-        tree.insert(8, "yaryora");
+        System.out.println();
+        tree.insert(5, "q");
+        tree.insert(50, "s");
+        tree.insert(1, "v");
+        tree.insert(99, "y");
+        tree.insert(8, "x");
         tree.Show(tree.getRoot());
 
         /*

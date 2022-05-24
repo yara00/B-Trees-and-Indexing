@@ -44,53 +44,65 @@ public class Tree implements IBTree{
         newNode.setLeaf(childAtIndex.isLeaf());
         newNode.setNumOfKeys(this.minDegree - 1); // check
         for(int i=0; i< this.minDegree-1; i++) {
-            newNode.getKeys().add(childAtIndex.getKeys().get(i + this.minDegree));
-            newNode.getValues().add(childAtIndex.getValues().get(i + this.minDegree));
+            newNode.getKeys().add(childAtIndex.getKeys().remove(this.minDegree));
+            newNode.getValues().add(childAtIndex.getValues().remove(this.minDegree));
         }
-        while(newNode.getKeys().size() > newNode.getNumOfKeys()) {
+        /*
+        while(childAtIndex.getKeys().size() > childAtIndex.getNumOfKeys()) {
             newNode.getKeys().remove(newNode.getKeys().size()-1);
             newNode.getValues().remove(newNode.getValues().size()-1);
         }
+         */
         if(!childAtIndex.isLeaf()) {
             for(int i=0; i<this.minDegree; i++) { // momken t-1
-                newNode.getChildren().add(childAtIndex.getChildren().get(i + this.minDegree));
+                newNode.getChildren().add(childAtIndex.getChildren().remove(this.minDegree));
             }
+
         }
         childAtIndex.setNumOfKeys(this.minDegree - 1);
+        /*
         for(int i= node.getNumOfKeys(); i >= (index + 1); i--) {
             node.getChildren().add(i+1, node.getChildren().get(i));
         }
+         */
         node.getChildren().add(index+1, newNode);
+        /*
         for(int i=node.getNumOfKeys()-1; i >= index; i--) {
             node.getKeys().add(i + 1, node.getKeys().get(i));
             node.getValues().add(i + 1, node.getValues().get(i));
 
         }
-        node.getKeys().add(index, childAtIndex.getKeys().get(this.minDegree - 1));
-        node.getValues().add(index, childAtIndex.getValues().get(this.minDegree - 1));
+         */
+        node.getKeys().add(index, childAtIndex.getKeys().remove(this.minDegree - 1));
+        node.getValues().add(index, childAtIndex.getValues().remove(this.minDegree - 1));
         node.setNumOfKeys(node.getNumOfKeys() + 1);
+        /*
         while(node.getKeys().size() > node.getNumOfKeys()) {
             node.getKeys().remove(node.getKeys().size()-1);
             node.getValues().remove(node.getValues().size()-1);
         }
+
+         */
     }
 
     private void insertNonFull(IBTreeNode node, Comparable key, Object value) {
-
         if(node.isLeaf()) {
             int numOfKeys = node.getNumOfKeys() - 1;
             while(numOfKeys >= 0 && key.compareTo(node.getKeys().get(numOfKeys)) < 0) {
-                node.getKeys().add(numOfKeys + 1, node.getKeys().get(numOfKeys));
-                node.getValues().add(numOfKeys + 1, node.getValues().get(numOfKeys));
+               // node.getKeys().add(numOfKeys + 1, node.getKeys().get(numOfKeys));
+              //  node.getValues().add(numOfKeys + 1, node.getValues().get(numOfKeys));
                 numOfKeys--;
             }
             node.getKeys().add(numOfKeys + 1, key);
             node.getValues().add(numOfKeys + 1, value);
             node.setNumOfKeys(node.getNumOfKeys() + 1);
+            /*
             while(node.getKeys().size() > node.getNumOfKeys()) {
                 node.getKeys().remove(node.getKeys().size()-1);
                 node.getValues().remove(node.getValues().size()-1);
             }
+
+             */
         }
         else {
             int numOfKeys = node.getNumOfKeys() - 1;
@@ -106,7 +118,6 @@ public class Tree implements IBTree{
                     numOfKeys++;
                 }
             }
-
             insertNonFull((IBTreeNode) node.getChildren().get(numOfKeys), key, value);
         }
     }
@@ -140,7 +151,6 @@ public class Tree implements IBTree{
 
         }
         else {
-
             while (i < parent.getChildren().size())
                 getParent((IBTreeNode) parent.getChildren().get(i) , child,++i);
 
@@ -234,7 +244,6 @@ public class Tree implements IBTree{
 
         }
 
-
         return false;
     }
 
@@ -243,14 +252,16 @@ public class Tree implements IBTree{
     public void Show(IBTreeNode x) {
         assert (x == null);
         int i;
-        for ( i = 0; i < x.getNumOfKeys(); i++){
+        for ( i = 0; i < x.getKeys().size(); i++){
             if(!x.isLeaf()){
                 Show((IBTreeNode) x.getChildren().get(i));
             }
-            System.out.print(" " +x.getKeys().get(i));
+           System.out.print(" " +x.getKeys().get(i));
             System.out.print(" " + x.getValues().get(i));
         }
         if(!x.isLeaf()){
+           // System.out.println(x.getChildren().size());
+           // System.out.println(x.getKeys().size());
             Show((IBTreeNode) x.getChildren().get(i));
         }
     }
@@ -258,7 +269,11 @@ public class Tree implements IBTree{
 
     public static void main(String[] args) {
 
-        IBTree tree = new Tree(1);
+        IBTree tree = new Tree(2);
+        for(int i = 0 ; i < 100; i++){
+            tree.insert(i, "");
+        }
+        /*
         tree.insert(100, "tt");
         tree.Show(tree.getRoot());
         System.out.println();
@@ -277,7 +292,9 @@ public class Tree implements IBTree{
         tree.insert(14, "rr");
         tree.Show(tree.getRoot());
         System.out.println();
-
+        tree.insert(1, "oo");
+        tree.insert(22222,"e");
+*/
         tree.Show(tree.getRoot());
 
   /*      Tree tree=new Tree(3);

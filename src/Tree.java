@@ -115,25 +115,126 @@ public class Tree implements IBTree{
         IBTreeNode temp = root;
 
         while (temp != null ) {
-
-            List values = temp.getValues();
-
             int index = temp.search(key);
             if (index < temp.getKeys().size() && key.compareTo(temp.getKeys().get(index)) == 0) {
-                return true;
+                return temp;
             } else {
                 if (temp.getChildren() != null)
                     temp = (IBTreeNode) temp.getChildren().get(index);
-                else return false;
+                else return null;
 
             }
         }
 
-        return false;
+        return null;
+    }
+
+    //I was un able to get the P without using a global variable
+    static IBTreeNode parent;
+    public IBTreeNode getParent(IBTreeNode parent,IBTreeNode child ,int i ){
+        if (parent == null)return null;
+
+        if (parent.getChildren().contains(child)){
+            this.parent=parent;
+            return parent;
+
+        }
+        else {
+
+            while (i < parent.getChildren().size())
+                getParent((IBTreeNode) parent.getChildren().get(i) , child,++i);
+
+        }
+
+        return null;
+    }
+
+
+    public Object getLeftSibling(IBTreeNode node){
+        if (node==null)return null;
+        getParent(root,node,0);
+        int index = parent.getChildren().indexOf(node);
+        if (index >0){
+            index-=1;
+            return parent.getChildren().get(index);
+        }
+        return null;
+    }
+
+    public Object getRightSibling(IBTreeNode node){
+        if (node==null)return null;
+        getParent(root,node,0);
+        int index = parent.getChildren().indexOf(node);
+        if (index < parent.getChildren().size()){
+            index+=1;
+            return parent.getChildren().get(index);
+        }
+        return null;
     }
 
     @Override
     public boolean delete(Comparable key) {
+
+        IBTreeNode nodeContainingToBeRemovedKey = (IBTreeNode) search(key);
+        int minKeys = (int) (Math.ceil(this.minDegree/2)-1);
+        if(nodeContainingToBeRemovedKey!=null ){
+            int index =nodeContainingToBeRemovedKey.getKeys().indexOf(key);
+            if (nodeContainingToBeRemovedKey.isLeaf()){
+                if (nodeContainingToBeRemovedKey.getKeys().size() > minKeys){
+                    //1st case we remove the key from the leave node
+                    //and the number of keys are more than min degree
+                    nodeContainingToBeRemovedKey.getKeys().remove(key);
+                    nodeContainingToBeRemovedKey.getValues().remove(index);
+                }
+                else {
+                    //2nd case we remove the key from the leave node
+                    //and the number of keys are equal or less than min degree
+
+                    if (getLeftSibling(nodeContainingToBeRemovedKey)!=null){
+                        //we see if there exist a left sibling and if that sibling has more than
+                        //the min element in the keys list
+                        // so we will but the maximum of that sibling in the parent node
+                        //and put the parent in the current node to remove the key to be removed and the size will be more that the min
+                        IBTreeNode leftSibling = (IBTreeNode) getLeftSibling(nodeContainingToBeRemovedKey);
+
+                        if (leftSibling.getKeys().size() > minKeys){//if that sibling has more than the min element in the keys list
+
+                            int i=leftSibling.getKeys().size()-1;//index of the maximum element
+
+                            parent.getKeys().add(leftSibling.getKeys().get(i));
+                            parent.getValues().add(leftSibling.getValues().get(i));
+
+
+                            nodeContainingToBeRemovedKey.getKeys().add(parent.getKeys().get(parent.getChildren().indexOf(leftSibling)));
+                            nodeContainingToBeRemovedKey.getValues().add(parent.getValues().get(parent.getChildren().indexOf(leftSibling)));
+
+
+                            nodeContainingToBeRemovedKey.getKeys().remove(key);
+                            nodeContainingToBeRemovedKey.getValues().remove(index);
+                        }
+
+
+                    }
+                    else if (getLeftSibling(nodeContainingToBeRemovedKey)!=null){
+                        IBTreeNode rightSibling = (IBTreeNode) getLeftSibling(nodeContainingToBeRemovedKey);
+                        parent.getKeys().add(rightSibling.getKeys().get(0));
+                        parent.getValues().add(rightSibling.getValues().get(0));
+
+                        nodeContainingToBeRemovedKey.getKeys().add(parent.getKeys().get(parent.getChildren().indexOf(rightSibling)));
+                        nodeContainingToBeRemovedKey.getValues().add(parent.getValues().get(parent.getChildren().indexOf(rightSibling)));
+
+                        nodeContainingToBeRemovedKey.getKeys().remove(key);
+                        nodeContainingToBeRemovedKey.getValues().remove(index);
+
+
+                    }
+
+                }
+            }
+
+        }
+
+
         return false;
     }
 
@@ -153,8 +254,11 @@ public class Tree implements IBTree{
             Show((IBTreeNode) x.getChildren().get(i));
         }
     }
+
+
     public static void main(String[] args) {
-        IBTree tree = new Tree(2);
+
+        IBTree tree = new Tree(1);
         tree.insert(100, "tt");
         tree.Show(tree.getRoot());
         System.out.println();
@@ -173,18 +277,10 @@ public class Tree implements IBTree{
         tree.insert(14, "rr");
         tree.Show(tree.getRoot());
         System.out.println();
-        tree.insert(870, "p");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(5, "q");
-        tree.insert(50, "s");
-        tree.insert(1, "v");
-        tree.insert(99, "y");
-        tree.insert(8, "x");
+
         tree.Show(tree.getRoot());
 
-        /*
-        Tree tree=new Tree(3);
+  /*      Tree tree=new Tree(3);
 
         Node r = new Node(3);
         tree.root=r;
@@ -253,11 +349,12 @@ public class Tree implements IBTree{
         children.add(child2);
         r.setChildren(children);
 
-        System.out.println( tree.search("c"));
+      /*  System.out.println( tree.search("c"));
         System.out.println( tree.search("a"));
         System.out.println( tree.search("g"));
         System.out.println( tree.search("e"));
-        System.out.println( tree.search("o"));
+        System.out.println( tree.search("o"));*/
+
 /*
         System.out.println( tree.search(9));
         System.out.println( tree.search(3));

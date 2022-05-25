@@ -239,49 +239,56 @@ public class Tree implements IBTree{
     public boolean delete(Comparable key) {
 
         IBTreeNode nodeContainingToBeRemovedKey = (IBTreeNode) search(key);
-        if(nodeContainingToBeRemovedKey!=null ){
 
-            int index =nodeContainingToBeRemovedKey.getKeys().indexOf(key);
+        if(nodeContainingToBeRemovedKey==null) return false;
 
-            if (nodeContainingToBeRemovedKey.isLeaf()){
-                //the  case that should be done when the key is in a leaf node
-                //when we borrow from a parent and that parent will have less than min
+        int index =nodeContainingToBeRemovedKey.getKeys().indexOf(key);
 
-                if (nodeContainingToBeRemovedKey.getKeys().size() > this.minDegree-1){
-                    //1st case we remove the key from the leave node
-                    //and the number of keys are more than min degree
+        if (nodeContainingToBeRemovedKey.isLeaf()){
+            //the  case that should be done when the key is in a leaf node
+            //when we borrow from a parent and that parent will have less than min
+            /***
+             * 1st case we remove the key from the leave node
+             * and the number of keys are more than min degree
+            **/
+            if (nodeContainingToBeRemovedKey.getKeys().size() > this.minDegree-1){
+                //1st case we remove the key from the leave node
+                //and the number of keys are more than min degree
                     nodeContainingToBeRemovedKey.getKeys().remove(key);
                     nodeContainingToBeRemovedKey.getValues().remove(index);
 
                     return true;
+            }
 
-                }
+            /**
+             * 2nd case we remove the key from the leave node
+             * and the number of keys are equal or less than min degree
+             * there are 3 subcases
+             * */
+            else {
 
-                else {
-                    //2nd case we remove the key from the leave node
-                    //and the number of keys are equal or less than min degree
                     IBTreeNode leftSibling = (IBTreeNode) getLeftSibling(nodeContainingToBeRemovedKey);
                     IBTreeNode rightSibling = (IBTreeNode) getRightSibling(nodeContainingToBeRemovedKey);
 
+
+                    /**
+                     * If the left sibling has more than minDegree-1
+                     * So we will borrow a key from if and remove the nodeToBeRemoved
+                     * **/
                     if (leftSibling != null &&  leftSibling.getKeys().size() > this.minDegree-1){
-
-                        //we see if there exist a left sibling and if that sibling has more than
-                        //the min element in the keys list
-                        // so we will but the maximum of that sibling in the parent node
-                        //and put the parent in the current node to remove the key to be removed and the size will be more that the min
-                        //if that sibling has more than the min element in the keys list
-
                             borrowFromLeft(nodeContainingToBeRemovedKey);
 
                             nodeContainingToBeRemovedKey.getKeys().remove(index);
                             nodeContainingToBeRemovedKey.getValues().remove(index);
 
-                        return true;
+                            return true;
 
                     }
+                    /**
+                     * If the left sibling has  not more than minDegree-1  we will check it's rightSibling if right Sibling has more than minDegree-1
+                     * So we will borrow a key from if and remove the nodeToBeRemoved
+                     * **/
                     else if (  rightSibling != null && rightSibling.getKeys().size() > this.minDegree-1 ) {
-                           //3rd case the node to be deleted is leaf and has number of elements less oe equal min§Degree
-                           // and it has a right sibling and that right sibling has more than minDegree
 
                         borrowFromRight(nodeContainingToBeRemovedKey);
 
@@ -290,45 +297,32 @@ public class Tree implements IBTree{
 
                         return true;
                     }
-
+                    /**
+                     * This case when the both rightSibling and leftSibling  has no more than minDegree-1
+                     * so in this case if there exist leftSibling we merge the leftSibling and node and the parent
+                     * and put that node as new child then remove the leftSibling and node
+                     *
+                     * /////Whet if the parent node has not more than midDegree-1 or is not a root ???
+                     * ///////////// here we should get a solution
+                     * */
                     else  {
                         //case both LC an RC has number of keys less than or equal minDegree
+                        IBTreeNode nodeToBeMerged=leftSibling;
+                        if (leftSibling==null) nodeToBeMerged=rightSibling;
 
-                        if (leftSibling==null && (parent.getNumOfKeys()>minDegree-1 || parent == root)){
+                        if ( nodeToBeMerged!=null && ( parent.getNumOfKeys() > minDegree-1 || parent == root )){
 
-                            IBTreeNode newLeftNode = merge(nodeContainingToBeRemovedKey,rightSibling);
-                            //there is no left sibling so the node is at most left
-                            //the element to be merged with RL N is at index 0
+                            IBTreeNode newToChild = merge(nodeToBeMerged,nodeContainingToBeRemovedKey);
                             int i=0;
-                            while ((int)newLeftNode.getKeys().get(i) < (int)parent.getKeys().get(0)) i++ ;
 
-                            newLeftNode.getKeys().add(i,parent.getKeys().get(0));
-                            newLeftNode.getValues().add(i,parent.getValues().get(0));
+                            int newChildIndex =parent.getChildren().indexOf(nodeToBeMerged);
+                            if (leftSibling==null) newChildIndex=0;
+                            while ( i <  newToChild.getKeys().size() &&(int) newToChild.getKeys().get(i) < (int) parent.getKeys().get( parent.getChildren().indexOf(nodeToBeMerged) ) )  i++ ;
 
-                            parent.getKeys().remove(0);
-                            parent.getValues().remove(0);
-                            parent.getChildren().remove(0);
-
-                            parent.getChildren().remove(0);
-
-                            parent.getChildren().add(0,newLeftNode);
-
-                            newLeftNode.getKeys().remove(key);
-                            return true;
+                            newToChild.getKeys().add( i , parent.getKeys().get(newChildIndex));
+                            newToChild.getValues().add( i , parent.getValues().get(newChildIndex));
 
 
-                        }
-
-                        else if (leftSibling!=null && !( parent.getNumOfKeys() > minDegree-1 || parent == root )){
-
-                            IBTreeNode newRightNode = merge(leftSibling,nodeContainingToBeRemovedKey);
-                            int i=0;
-                            while ((int)newRightNode.getKeys().get(i) < (int)parent.getKeys().get(parent.getChildren().indexOf(leftSibling))) i++ ;
-
-                            newRightNode.getKeys().add( i , parent.getKeys().get(parent.getChildren().indexOf(leftSibling)));
-                            newRightNode.getValues().add( i , parent.getValues().get(parent.getChildren().indexOf(leftSibling)));
-
-                            int newChildIndex =parent.getChildren().indexOf(leftSibling);
 
                             parent.getKeys().remove(newChildIndex);
                             parent.getValues().remove(newChildIndex);
@@ -336,9 +330,11 @@ public class Tree implements IBTree{
 
                             parent.getChildren().remove(newChildIndex);
 
-                            parent.getChildren().add(newChildIndex,newRightNode);
+                            parent.getChildren().add(newChildIndex , newToChild);
 
-                            newRightNode.getKeys().remove(key);
+
+                            newToChild.getValues().remove(newToChild.getKeys().indexOf(key));
+                            newToChild.getKeys().remove(key);
 /*
                             if (!( parent.getNumOfKeys() > minDegree-1 || parent == root)){
                                 IBTreeNode parentOfthisnode = parent;
@@ -360,6 +356,13 @@ public class Tree implements IBTree{
                     }
                 }
             }
+
+        /**
+         *
+         * when the node to be removed is not leaf so we have 2 cases
+         * replace it with maximum left key or minimum right key
+         *
+         * */
             else {
                 //when the node to be removed is noe leaf so we have 2 cases
                 //replace it with maximum left key or minimum right key
@@ -395,7 +398,11 @@ public class Tree implements IBTree{
 
                 //if non of Lc nor Rc has more than minimum number of keys ??
                 //we merge Rc and Lc then remove the p key
-                else {
+                /**
+                 * case where both RC and LC have less than minDegree
+                 * we merge both left and right child in case those are leaf nodes
+                 * */
+                else if (rightChild.isLeaf()){
 
 
                     nodeContainingToBeRemovedKey.getKeys().remove(index);
@@ -404,13 +411,12 @@ public class Tree implements IBTree{
                     nodeContainingToBeRemovedKey.getChildren().remove(index);
 
                     nodeContainingToBeRemovedKey.getChildren().set(index, merge(leftChild,rightChild));
+
                     return true;
 
                 }
             }
 
-
-        }
 
         return false;
     }
@@ -426,6 +432,7 @@ public class Tree implements IBTree{
     public IBTreeNode inOrderPredecessor(IBTreeNode node , Comparable key){
         IBTreeNode temp =node;
         int i = temp.getKeys().indexOf(key);
+
         while (temp.getChildren().size() != 0){
 
 
@@ -522,10 +529,9 @@ public class Tree implements IBTree{
 
         tree.Show(tree.getRoot());
       //  tree.insert(15,"Wfg");
-        tree.insert(11,"www");
-        tree.delete(8);
+        tree.delete(20);
 
-        tree.delete(16);
+        tree.delete(14);
 
         tree.delete(14);
         tree.insert(1,"qq");

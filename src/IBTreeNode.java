@@ -42,7 +42,7 @@ public interface IBTreeNode<K extends Comparable<K>, V> {
 	 * @param values the values to set
 	 */
 	public void setValues(List<V> values);
-	
+	public int getChildrenNum();
 	/**
 	 * @return the children return the list of children for the given node.
 	 */

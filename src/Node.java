@@ -11,6 +11,7 @@ public class Node<K extends Comparable<K>, V> implements IBTreeNode {
     private boolean isLeaf = true;
 
     public Node(int k) {
+
         this.childrenNum = k;
         this.keysNumber = 0;
         this.children = new ArrayList<>(k);
@@ -20,7 +21,7 @@ public class Node<K extends Comparable<K>, V> implements IBTreeNode {
 
     @Override
     public int getNumOfKeys() {
-        return keysNumber;
+        return getKeys().size();
     }
 
     @Override
@@ -36,6 +37,10 @@ public class Node<K extends Comparable<K>, V> implements IBTreeNode {
     @Override
     public void setLeaf(boolean isLeaf) {
         this.isLeaf = isLeaf;
+    }
+
+    public int getChildrenNum() {
+        return childrenNum;
     }
 
     @Override

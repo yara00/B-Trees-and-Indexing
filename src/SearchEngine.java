@@ -3,35 +3,19 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-public class SearchEngine implements ISearchResult{
+public class SearchEngine implements ISearchEngine{
     private String id;
     private int rank;
-
-    @Override
-    public String getId() {
-        return this.id;
-    }
-
-    @Override
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public int getRank() {
-        return 0;
-    }
-
-    @Override
-    public void setRank(int rank) {
-
-    }
+    IBTree<String, Integer> tree = new Tree(3);
+    HashMap<String, IBTree> map = new HashMap<>();
 
     private String parser(String filePath) {
         File xmlFile = new File(filePath);
@@ -67,5 +51,30 @@ public class SearchEngine implements ISearchResult{
     public static void main(String[] args) {
         SearchEngine searchEngine = new SearchEngine();
         searchEngine.parser("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+    }
+
+    @Override
+    public void indexWebPage(String filePath) {
+
+    }
+
+    @Override
+    public void indexDirectory(String directoryPath) {
+
+    }
+
+    @Override
+    public void deleteWebPage(String filePath) {
+
+    }
+
+    @Override
+    public List<ISearchResult> searchByWordWithRanking(String word) {
+        return null;
+    }
+
+    @Override
+    public List<ISearchResult> searchByMultipleWordWithRanking(String sentence) {
+        return null;
     }
 }

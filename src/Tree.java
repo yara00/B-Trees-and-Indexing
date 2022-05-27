@@ -598,7 +598,16 @@ public class Tree implements IBTree{
 
         return merged;
 }
+    @Override
+    public Object tempSearch(Comparable key) {
+        IBTreeNode node = (IBTreeNode) this.search(key);
+        if(node == null) return null;
 
+        for(int i=0; i<node.getNumOfKeys(); i++) {
+            if(key.compareTo(node.getKeys().get(i)) == 0) return node.getValues().get(i);
+        }
+        return null;
+    }
     public static void main(String[] args) {
 
         IBTree tree = new Tree(2);

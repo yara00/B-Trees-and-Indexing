@@ -47,7 +47,6 @@ public class SearchEngine implements ISearchEngine{
             String[] contentArr = content.split("\\W+");
 
             for(int c=0; c<contentArr.length; c++) {
-
                 HashMap<String,Integer> map = (HashMap<String, Integer>) tree.tempSearch(contentArr[c].toLowerCase());
                 if(map == null) {
                     HashMap<String,Integer> newMap = new HashMap<>();
@@ -55,11 +54,6 @@ public class SearchEngine implements ISearchEngine{
                     tree.insert(contentArr[c].toLowerCase(), newMap);
                 }
                 else map.merge(id, 1, (a,b) -> a + b);
-
-                Int rank = (Int) tree.tempSearch(contentArr[c]);
-                if(rank == null) tree.insert(contentArr[c].toLowerCase(), new Int(1));
-                else rank.x++;
-
             }
         }
     }
@@ -90,18 +84,9 @@ public class SearchEngine implements ISearchEngine{
         HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(word.toLowerCase());
         for(String key : map.keySet()) {
             ISearchResult result = new SearchResult();
-
             result.setRank(map.get(key));
             result.setId(key);
             resultList.add(result);
-
-            Int rank = (Int) map.get(key).tempSearch(word.toLowerCase());
-            if(rank != null) {
-                result.setRank(rank.x);
-                result.setId(key);
-                resultList.add(result);
-            }
-
         }
         return resultList;
     }
@@ -115,7 +100,7 @@ public class SearchEngine implements ISearchEngine{
         File dir = new File(directoryPath);
         File[] directoryListing = dir.listFiles();
         for (File file : directoryListing) {
-                indexPage(file.getPath());
+            indexPage(file.getPath());
         }
     }
 
@@ -137,18 +122,9 @@ public class SearchEngine implements ISearchEngine{
             HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(word.toLowerCase());
             for(String key : map.keySet()) {
                 ISearchResult result = new SearchResult();
-
                 result.setRank(map.get(key));
                 result.setId(key);
                 resultList.add(result);
-
-                Int rank = (Int) map.get(key).tempSearch(word.toLowerCase());
-                if(rank != null) {
-                    result.setRank(rank.x);
-                    result.setId(key);
-                    resultList.add(result);
-                }
-
             }
         }
         return resultList;
@@ -159,9 +135,9 @@ public class SearchEngine implements ISearchEngine{
         searchEngine.parser("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         List<ISearchResult> res= new LinkedList<>();
-      // res = searchEngine.wordSearch("The");
-      //  res = searchEngine.searchByMultipleWordWithRanking("Konica Minolta");
-       // searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+        // res = searchEngine.wordSearch("The");
+        //  res = searchEngine.searchByMultipleWordWithRanking("Konica Minolta");
+        // searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         res = searchEngine.wordSearch("Konica");
         searchEngine.indexDelete("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         System.out.println("test");

@@ -133,15 +133,18 @@ public class SearchEngine implements ISearchEngine{
 
     public static void main(String[] args) {
         SearchEngine searchEngine = new SearchEngine();
-        searchEngine.parser("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
-        searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+        searchEngine.indexDirectory("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample");
         List<ISearchResult> res= new LinkedList<>();
-        // res = searchEngine.wordSearch("The");
-        //  res = searchEngine.searchByMultipleWordWithRanking("Konica Minolta");
-        // searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
-        res = searchEngine.wordSearch("Konica");
-        searchEngine.indexDelete("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+
+        searchEngine.deleteWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+        res = searchEngine.searchByWordWithRanking("konica");
         System.out.println("test");
 
     }
 }
+
+// res = searchEngine.wordSearch("The");
+//  res = searchEngine.searchByMultipleWordWithRanking("Konica Minolta");
+// searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+//searchEngine.indexDelete("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+// res = searchEngine.searchByMultipleWordWithRanking("Konica ricky Stockton");

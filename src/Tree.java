@@ -552,8 +552,9 @@ public class Tree implements IBTree{
             if(!x.isLeaf()){
                 Show((IBTreeNode) x.getChildren().get(i));
             }
-            System.out.print(" " +x.getKeys().get(i));
-            System.out.print(" " + x.getValues().get(i));
+            System.out.print("(Key:" +x.getKeys().get(i));
+            System.out.print(",Value:" + x.getValues().get(i) + ")");
+            System.out.println();
         }
         if(!x.isLeaf()){
             Show((IBTreeNode) x.getChildren().get(i));
@@ -614,7 +615,8 @@ public class Tree implements IBTree{
         for(int i = 1 ; i < 23; i+=1){
             tree.insert(i, "a"+i);
         }
-
+        System.out.println("Root is " + tree.getRoot().getKeys().toString());
+        tree.Show(tree.getRoot());
         /*
         tree.insert(100, "tt");
         tree.Show(tree.getRoot());
@@ -636,7 +638,7 @@ public class Tree implements IBTree{
         System.out.println();
         tree.insert(1, "oo");
         tree.insert(22222,"e");
-*/
+
 
         tree.Show(tree.getRoot());
       //  tree.insert(15,"Wfg");

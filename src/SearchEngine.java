@@ -3,16 +3,14 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
+// key --> word
+// hashmap --> value (id --> key rank --> value)
 public class SearchEngine implements ISearchEngine{
     class Int{
         public Integer x;
@@ -20,8 +18,9 @@ public class SearchEngine implements ISearchEngine{
             this.x = x;
         }
     }
-    HashMap<String, IBTree> map = new HashMap<>();
 
+    IBTree<String, HashMap<String, Integer>> tree = new Tree(4);
+    // parse document content
     private NodeList parser(String filePath) {
         File xmlFile = new File(filePath);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -46,13 +45,16 @@ public class SearchEngine implements ISearchEngine{
             String id = eElement.getAttribute("id");
             String content = eElement.getTextContent();
             String[] contentArr = content.split("\\W+");
-            IBTree<String, Int> tree = new Tree(3);
+
             for(int c=0; c<contentArr.length; c++) {
-                Int rank = (Int) tree.tempSearch(contentArr[c]);
-                if(rank == null) tree.insert(contentArr[c], new Int(1));
-                else rank.x++;
+                HashMap<String,Integer> map = (HashMap<String, Integer>) tree.tempSearch(contentArr[c].toLowerCase());
+                if(map == null) {
+                    HashMap<String,Integer> newMap = new HashMap<>();
+                    newMap.put(id, 1);
+                    tree.insert(contentArr[c].toLowerCase(), newMap);
+                }
+                else map.merge(id, 1, (a,b) -> a + b);
             }
-            map.put(id, tree);
         }
     }
     private void indexDelete(String filePath) {
@@ -60,20 +62,31 @@ public class SearchEngine implements ISearchEngine{
         for (int i = 0; i < nodeList.getLength(); i++) {
             Element eElement = (Element) nodeList.item(i);
             String id = eElement.getAttribute("id");
-            map.remove(id);
+            String content = eElement.getTextContent();
+            String[] contentArr = content.split("\\W+");
+
+            for(int c=0; c<contentArr.length; c++) {
+                HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(contentArr[c].toLowerCase());
+
+                for(String key: map.keySet()) {
+                    if(key.equals(id)) {
+                        map.remove(key);
+                        break;
+                    }
+                }
+                if(map.size() == 0) tree.delete(contentArr[c].toLowerCase());
+            }
         }
     }
 
     private List<ISearchResult> wordSearch(String word) {
         List<ISearchResult> resultList = new LinkedList<>();
+        HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(word.toLowerCase());
         for(String key : map.keySet()) {
             ISearchResult result = new SearchResult();
-            Int rank = (Int) map.get(key).tempSearch(word);
-            if(rank != null) {
-                result.setRank(rank.x);
-                result.setId(key);
-                resultList.add(result);
-            }
+            result.setRank(map.get(key));
+            result.setId(key);
+            resultList.add(result);
         }
         return resultList;
     }
@@ -106,14 +119,12 @@ public class SearchEngine implements ISearchEngine{
         List<ISearchResult> resultList = new LinkedList<>();
         String[] wordArr = sentence.split("\\W+");
         for(String word : wordArr) {
+            HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(word.toLowerCase());
             for(String key : map.keySet()) {
                 ISearchResult result = new SearchResult();
-                Int rank = (Int) map.get(key).tempSearch(word);
-                if(rank != null) {
-                    result.setRank(rank.x);
-                    result.setId(key);
-                    resultList.add(result);
-                }
+                result.setRank(map.get(key));
+                result.setId(key);
+                resultList.add(result);
             }
         }
         return resultList;
@@ -125,7 +136,10 @@ public class SearchEngine implements ISearchEngine{
         searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         List<ISearchResult> res= new LinkedList<>();
       // res = searchEngine.wordSearch("The");
-        res = searchEngine.searchByMultipleWordWithRanking("Konica Minolta");
+      //  res = searchEngine.searchByMultipleWordWithRanking("Konica Minolta");
+       // searchEngine.indexWebPage("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
+        res = searchEngine.wordSearch("Konica");
+        searchEngine.indexDelete("C:\\Users\\Dell\\Desktop\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         System.out.println("test");
 
     }

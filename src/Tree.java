@@ -1,3 +1,6 @@
+import java.util.LinkedList;
+import java.util.Queue;
+
 public class Tree implements IBTree{
 
     private int minDegree;
@@ -197,208 +200,265 @@ public class Tree implements IBTree{
      * this function borrow a key from its left sibling
      */
 
-    public void borrowFromLeft(IBTreeNode node){
+    public void borrowFromLeft(IBTreeNode parentNode , IBTreeNode childNode){
 
-        IBTreeNode leftSibling = (IBTreeNode) getLeftSibling(node);
-        int i = parent.getChildren().indexOf(node);
+        int i = parentNode.getChildren().indexOf(childNode);
+        IBTreeNode leftSibling = (IBTreeNode) parentNode.getChildren().get(i-1);
+       // int i = parent.getChildren().indexOf(node);
         //index of the maximum element
 
-        parent.getKeys().add(i-1,leftSibling.getKeys().get(leftSibling.getKeys().size()-1));
-        parent.getValues().add(i-1,leftSibling.getValues().get(leftSibling.getKeys().size()-2));
+        parentNode.getKeys().add(i-1,leftSibling.getKeys().get(leftSibling.getKeys().size()-1));
+        parentNode.getValues().add(i-1,leftSibling.getValues().get(leftSibling.getKeys().size()-1));
 
-        node.getKeys().add(0,parent.getKeys().get(i));
-        node.getValues().add(0,parent.getValues().get(i));
+        childNode.getKeys().add(0,parentNode.getKeys().get(i));
+        childNode.getValues().add(0,parentNode.getValues().get(i));
 
-        parent.getKeys().remove(i);
-        parent.getValues().remove(i);
+        parentNode.getKeys().remove(i);
+        parentNode.getValues().remove(i);
 
         leftSibling.getKeys().remove(leftSibling.getKeys().size()-1);
         leftSibling.getValues().remove(leftSibling.getValues().size()-1);
 
+        if(!leftSibling.isLeaf()) {
+            childNode.getChildren().add(0, leftSibling.getChildren().get(leftSibling.getNumOfKeys()));
+            leftSibling.getChildren().remove(leftSibling.getNumOfKeys());
+        }
 
     }
-    public void borrowFromRight(IBTreeNode node){
+    public void borrowFromRight(IBTreeNode parentNode,IBTreeNode childNode){
 
-        IBTreeNode rightSibling = (IBTreeNode) getRightSibling(node);
-        int i = parent.getChildren().indexOf(node);
+        int i = parentNode.getChildren().indexOf(childNode);
 
-        parent.getKeys().add(i+1 , rightSibling.getKeys().get(0));
-        parent.getValues().add(i+1 , rightSibling.getValues().get(0));
+        IBTreeNode rightSibling = (IBTreeNode) parentNode.getChildren().get(i+1);
 
-        node.getKeys().add( parent.getKeys().get(i) );
-        node.getValues().add(  parent.getKeys().get(i) );
+        //but the new value in the parent node
+        parentNode.getKeys().add(i+1 , rightSibling.getKeys().get(0));
+        parentNode.getValues().add(i+1 , rightSibling.getValues().get(0));
 
-        parent.getKeys().remove(i );
-        parent.getValues().remove(i);
+        childNode.getKeys().add( parentNode.getKeys().get(i) );
+        childNode.getValues().add(  parentNode.getValues().get(i) );
+
+        parentNode.getKeys().remove(i);
+        parentNode.getValues().remove(i);
 
         rightSibling.getKeys().remove(0);
         rightSibling.getValues().remove(0);
 
+        if(!rightSibling.isLeaf()) {
+
+            childNode.getChildren().add(rightSibling.getChildren().get(0));
+            rightSibling.getChildren().remove(0);
+
+        }
+
 
     }
 
-    public void borrow(IBTreeNode node){
-        if (getLeftSibling(node)!=null)
-            borrowFromLeft(node);
-        else borrowFromRight(node);
+    public void borrow(IBTreeNode parentNode,IBTreeNode childNode){
+       if (parentNode.getChildren().indexOf(childNode)==0)borrowFromRight(parentNode,childNode) ;
+
+        else     borrowFromLeft(parentNode,childNode);
+
 
     }
+
     @Override
     public boolean delete(Comparable key) {
-
         IBTreeNode nodeContainingToBeRemovedKey = (IBTreeNode) search(key);
+        if (nodeContainingToBeRemovedKey == null) return false;
+        else {
+            delete(root, key);
+            return true;
+        }
+    }
+    public boolean delete(IBTreeNode node,Comparable key) {
 
-        if(nodeContainingToBeRemovedKey==null) return false;
+        int index = 0;
+        boolean found = false;
+        IBTreeNode merged;
 
-        int index =nodeContainingToBeRemovedKey.getKeys().indexOf(key);
+        if (node.getKeys().contains(key)) {
+            index = node.getKeys().indexOf(key);
+            found = true;
+        } else {
+            while (index < node.getNumOfKeys() && key.compareTo(node.getKeys().get(index)) > 0)
+                index++;
 
-        if (nodeContainingToBeRemovedKey.isLeaf()){
-            //the  case that should be done when the key is in a leaf node
-            //when we borrow from a parent and that parent will have less than min
-            /***
-             * 1st case we remove the key from the leave node
-             * and the number of keys are more than min degree
-            **/
-            if (nodeContainingToBeRemovedKey.getKeys().size() > this.minDegree-1){
-                //1st case we remove the key from the leave node
-                //and the number of keys are more than min degree
-                    nodeContainingToBeRemovedKey.getKeys().remove(key);
-                    nodeContainingToBeRemovedKey.getValues().remove(index);
+        }
+        if (!found) {
 
-                    return true;
+            if (node.isLeaf())
+                return false;//case we do not found the key and the noe to be deleted is leaf node
+
+            IBTreeNode childNode = (IBTreeNode) node.getChildren().get(index);
+
+            if (childNode.getNumOfKeys() == minDegree - 1) {
+
+                if ((index - 1 >= 0 && ((IBTreeNode) node.getChildren().get(index - 1)).getNumOfKeys() > minDegree - 1)
+                        || index + 1 <= node.getNumOfKeys() && ((IBTreeNode) node.getChildren().get(index + 1)).getNumOfKeys() > minDegree - 1) {
+                    //this is the case where one of the parent of the nodeContainingToBeRemovedKey has minDegree
+                    borrow(node, childNode);
+                } else {
+
+                    if (index > node.getKeys().size() - 1) {
+
+                        merged = merge(childNode, (IBTreeNode) node.getChildren().get(index - 1));
+                 /*       if (node == root) {
+                            root = childNode;
+
+                        }
+*/
+                    } else {
+
+                        merged = merge(childNode, (IBTreeNode) node.getChildren().get(index + 1));
+
+                    }
+
+                    if (node == root && node.getNumOfKeys() == 0)
+
+                        root = merged;
+                }
+
+
             }
+            return delete(childNode, key);
+        }
+        IBTreeNode leftSibling = (IBTreeNode) getLeftSibling(node);
+        IBTreeNode rightSibling = (IBTreeNode) getRightSibling(node);
 
-            /**
-             * 2nd case we remove the key from the leave node
-             * and the number of keys are equal or less than min degree
-             * there are 3 subcases
-             * */
+        if (node.isLeaf()) {
+            if (node.getKeys().size() > this.minDegree-1) {
+
+                node.getKeys().remove(index);
+                node.getValues().remove(index);
+                return true;
+            }
             else {
 
-                    IBTreeNode leftSibling = (IBTreeNode) getLeftSibling(nodeContainingToBeRemovedKey);
-                    IBTreeNode rightSibling = (IBTreeNode) getRightSibling(nodeContainingToBeRemovedKey);
+                leftSibling = (IBTreeNode) getLeftSibling(node);
+                rightSibling = (IBTreeNode) getRightSibling(node);
 
 
-                    /**
-                     * If the left sibling has more than minDegree-1
-                     * So we will borrow a key from if and remove the nodeToBeRemoved
-                     * **/
-                    if (leftSibling != null &&  leftSibling.getKeys().size() > this.minDegree-1){
-                            borrowFromLeft(nodeContainingToBeRemovedKey);
+                /**
+                 * If the left sibling has more than minDegree-1
+                 * So we will borrow a key from if and remove the nodeToBeRemoved
+                 * **/
+                if (leftSibling != null &&  leftSibling.getKeys().size() > this.minDegree-1){
+                    borrowFromLeft(node,leftSibling);
 
-                            nodeContainingToBeRemovedKey.getKeys().remove(index);
-                            nodeContainingToBeRemovedKey.getValues().remove(index);
+                    node.getKeys().remove(index);
+                    node.getValues().remove(index);
 
-                            return true;
+                    return true;
 
-                    }
-                    /**
-                     * If the left sibling has  not more than minDegree-1  we will check it's rightSibling if right Sibling has more than minDegree-1
-                     * So we will borrow a key from if and remove the nodeToBeRemoved
-                     * **/
-                    else if (  rightSibling != null && rightSibling.getKeys().size() > this.minDegree-1 ) {
+                }
+                /**
+                 * If the left sibling has  not more than minDegree-1  we will check it's rightSibling if right Sibling has more than minDegree-1
+                 * So we will borrow a key from if and remove the nodeToBeRemoved
+                 * **/
+                else if (  rightSibling != null && rightSibling.getKeys().size() > this.minDegree-1 ) {
 
-                        borrowFromRight(nodeContainingToBeRemovedKey);
+                    borrowFromRight(node,rightSibling);
 
-                        nodeContainingToBeRemovedKey.getKeys().remove(index);
-                        nodeContainingToBeRemovedKey.getValues().remove(index);
+                    node.getKeys().remove(index);
+                    node.getValues().remove(index);
 
-                        return true;
-                    }
-                    /**
-                     * This case when the both rightSibling and leftSibling  has no more than minDegree-1
-                     * so in this case if there exist leftSibling we merge the leftSibling and node and the parent
-                     * and put that node as new child then remove the leftSibling and node
-                     *
-                     * /////Whet if the parent node has not more than midDegree-1 or is not a root ???
-                     * ///////////// here we should get a solution
-                     * */
-                    else  {
-                        //case both LC an RC has number of keys less than or equal minDegree
-                        IBTreeNode nodeToBeMerged=leftSibling;
-                        if (leftSibling==null) nodeToBeMerged=rightSibling;
+                    return true;
+                }
+                /**
+                 * This case when the both rightSibling and leftSibling  has no more than minDegree-1
+                 * so in this case if there exist leftSibling we merge the leftSibling and node and the parent
+                 * and put that node as new child then remove the leftSibling and node
+                 *
+                 * /////Whet if the parent node has not more than midDegree-1 or is not a root ???
+                 * ///////////// here we should get a solution
+                 * */
+                else  {
 
-                        if ( nodeToBeMerged!=null ){
+                    //case both LC an RC has number of keys less than or equal minDegree
+                    IBTreeNode nodeToBeMerged=leftSibling;
+                    if (leftSibling==null) nodeToBeMerged=rightSibling;
 
-                            IBTreeNode newToChild = merge(nodeToBeMerged,nodeContainingToBeRemovedKey);
-                            int i=0;
+                    if ( nodeToBeMerged != null ){
 
-                            int newChildIndex =parent.getChildren().indexOf(nodeToBeMerged);
-                            if (leftSibling==null) newChildIndex=0;
-                            while ( i <  newToChild.getKeys().size() &&(int) newToChild.getKeys().get(i) < (int) parent.getKeys().get( parent.getChildren().indexOf(nodeToBeMerged) ) )  i++ ;
+                        IBTreeNode newToChild = merge(nodeToBeMerged,node);
+                        int i=0;
 
-                            newToChild.getKeys().add( i , parent.getKeys().get(newChildIndex));
-                            newToChild.getValues().add( i , parent.getValues().get(newChildIndex));
+                        int newChildIndex =parent.getChildren().indexOf(nodeToBeMerged);
+                        if (leftSibling==null) newChildIndex=0;
+                        while ( i <  newToChild.getKeys().size() &&(int) newToChild.getKeys().get(i) < (int) parent.getKeys().get( parent.getChildren().indexOf(nodeToBeMerged) ) )  i++ ;
 
-
-
-                            parent.getKeys().remove(newChildIndex);
-                            parent.getValues().remove(newChildIndex);
-                            parent.getChildren().remove(newChildIndex);
-
-                            parent.getChildren().remove(newChildIndex);
-
-                            parent.getChildren().add(newChildIndex , newToChild);
+                        newToChild.getKeys().add( i , parent.getKeys().get(newChildIndex));
+                        newToChild.getValues().add( i , parent.getValues().get(newChildIndex));
 
 
-                            newToChild.getValues().remove(newToChild.getKeys().indexOf(key));
-                            newToChild.getKeys().remove(key);
 
-                            if (!( parent.getNumOfKeys() > minDegree-1 || parent == root)){
+                        parent.getKeys().remove(newChildIndex);
+                        parent.getValues().remove(newChildIndex);
+                        parent.getChildren().remove(newChildIndex);
 
-                                IBTreeNode parentOfThisNode = parent;
+                        parent.getChildren().remove(newChildIndex);
 
-                                int indexOfChlidToBeTransfered = 0;
-
-                                IBTreeNode toBorrowFrom = (IBTreeNode) getRightSibling(parentOfThisNode);
-
-                                if (toBorrowFrom==null){
-
-                                    toBorrowFrom = (IBTreeNode) getLeftSibling(parentOfThisNode);
-                                    indexOfChlidToBeTransfered = toBorrowFrom.getChildren().size()-1;
-
-                                }
-
-                                if (toBorrowFrom.getKeys().size()>minDegree-1){
-
-                                    borrow(parentOfThisNode);
-                                    if (indexOfChlidToBeTransfered!=0)
-                                        parentOfThisNode.getChildren().add(0,toBorrowFrom.getChildren().get(indexOfChlidToBeTransfered));
-                                   else
-                                        parentOfThisNode.getChildren().add(toBorrowFrom.getChildren().get(indexOfChlidToBeTransfered));
-
-                                    toBorrowFrom.getChildren().remove(indexOfChlidToBeTransfered);
-
-                                }
-                                else {
+                        parent.getChildren().add(newChildIndex , newToChild);
 
 
-                                    //Now I am working in case of right merging
-                                   do {
+                        newToChild.getValues().remove(newToChild.getKeys().indexOf(key));
+                        newToChild.getKeys().remove(key);
 
-                                       int j=0;
-                                       if (indexOfChlidToBeTransfered!=0) {
+                        if (!( parent.getNumOfKeys() > minDegree-1 || parent == root)){
 
-                                           parentOfThisNode.getKeys().add(0,
-                                                   parent.getKeys().get(parent.getChildren().indexOf(parentOfThisNode) - 1));
-                                           parentOfThisNode.getValues().add(0,
-                                                   parent.getValues().get(parent.getChildren().indexOf(parentOfThisNode) - 1));
+                            IBTreeNode parentOfThisNode = parent;
 
-                                           parent.getKeys().remove(parent.getChildren().indexOf(parentOfThisNode)-1);
-                                           parent.getValues().remove(parent.getChildren().indexOf(parentOfThisNode)-1);
+                            int indexOfChlidToBeTransfered = 0;
 
-                                       }else {
-                                           parentOfThisNode.getKeys().add(
-                                                   parent.getKeys().get(parent.getChildren().indexOf(parentOfThisNode)));
-                                           parentOfThisNode.getValues().add(
-                                                   parent.getValues().get(parent.getChildren().indexOf(parentOfThisNode)));
+                            IBTreeNode toBorrowFrom = (IBTreeNode) getRightSibling(parentOfThisNode);
 
-                                           parent.getKeys().remove(parent.getChildren().indexOf(parentOfThisNode));
-                                           parent.getValues().remove(parent.getChildren().indexOf(parentOfThisNode));
+                            if (toBorrowFrom==null){
 
-                                       }
+                                toBorrowFrom = (IBTreeNode) getLeftSibling(parentOfThisNode);
+                                indexOfChlidToBeTransfered = toBorrowFrom.getChildren().size()-1;
 
-                                       while (j < toBorrowFrom.getKeys().size()) {
+                            }
+
+                            if (toBorrowFrom.getKeys().size()>minDegree-1){
+
+                                borrow(parentOfThisNode,toBorrowFrom);
+                                if (indexOfChlidToBeTransfered!=0)
+                                    parentOfThisNode.getChildren().add(0,toBorrowFrom.getChildren().get(indexOfChlidToBeTransfered));
+                                else
+                                    parentOfThisNode.getChildren().add(toBorrowFrom.getChildren().get(indexOfChlidToBeTransfered));
+
+                                toBorrowFrom.getChildren().remove(indexOfChlidToBeTransfered);
+
+                            } else {
+
+
+                                //Now I am working in case of right merging
+                                do {
+
+                                    int j=0;
+                                    if (indexOfChlidToBeTransfered!=0) {
+
+                                        parentOfThisNode.getKeys().add(0,
+                                                parent.getKeys().get(parent.getChildren().indexOf(parentOfThisNode) - 1));
+                                        parentOfThisNode.getValues().add(0,
+                                                parent.getValues().get(parent.getChildren().indexOf(parentOfThisNode) - 1));
+
+                                        parent.getKeys().remove(parent.getChildren().indexOf(parentOfThisNode)-1);
+                                        parent.getValues().remove(parent.getChildren().indexOf(parentOfThisNode)-1);
+
+                                    }else {
+                                        parentOfThisNode.getKeys().add(
+                                                parent.getKeys().get(parent.getChildren().indexOf(parentOfThisNode)));
+                                        parentOfThisNode.getValues().add(
+                                                parent.getValues().get(parent.getChildren().indexOf(parentOfThisNode)));
+
+                                        parent.getKeys().remove(parent.getChildren().indexOf(parentOfThisNode));
+                                        parent.getValues().remove(parent.getChildren().indexOf(parentOfThisNode));
+
+                                    }
+
+                                    while (j < toBorrowFrom.getKeys().size()) {
 
 
                                         if (indexOfChlidToBeTransfered != 0) {
@@ -438,90 +498,82 @@ public class Tree implements IBTree{
 
                                     }
 
-                                       parentOfThisNode = parent;
+                                    parentOfThisNode = parent;
 
-                                       indexOfChlidToBeTransfered = 0;
+                                    indexOfChlidToBeTransfered = 0;
 
-                                       toBorrowFrom = (IBTreeNode) getRightSibling(parentOfThisNode);
+                                    toBorrowFrom = (IBTreeNode) getRightSibling(parentOfThisNode);
 
-                                       if (toBorrowFrom==null){
-                                           toBorrowFrom = (IBTreeNode) getLeftSibling(parentOfThisNode);
-                                           indexOfChlidToBeTransfered = toBorrowFrom.getChildren().size()-1;
-                                       }
+                                    if (toBorrowFrom==null){
+                                        toBorrowFrom = (IBTreeNode) getLeftSibling(parentOfThisNode);
+                                        indexOfChlidToBeTransfered = toBorrowFrom.getChildren().size()-1;
+                                    }
 
                                 } while (parentOfThisNode!=root);
-                                }
 
-
-                            }
-                            return true;
 
                         }
+                        return true;
+
 
                     }
-                }
+                 }
+               }
+            }
+        }
+        else {
+            index = node.getKeys().indexOf(key);
+            IBTreeNode leafChild =null;
+            IBTreeNode leftChild =inOrderPredecessor(node,key);
+            IBTreeNode rightChild = inOrderSuccessor(node,key);
+            int indexOfKeyInLeaf=-1;
+            if ( leftChild.getKeys().size() > minDegree-1)   {
+                leafChild =inOrderPredecessor(node,key);
+                indexOfKeyInLeaf=leafChild.getKeys().size()-1;
+            }
+            else if (rightChild.getKeys().size() > minDegree-1 ) {
+                leafChild = inOrderSuccessor(node, key);
+                indexOfKeyInLeaf = 0;
+            }
+            if (leafChild!=null && leafChild.getKeys().size() > minDegree-1){
+                //remove a key from non leaf node using  inOrderPredecessor or inOrderSuccessor
+                node.getKeys().remove(index);
+                node.getValues().remove(index);
+
+                node.getKeys().add(index,leafChild.getKeys().get(indexOfKeyInLeaf));
+                node.getValues().add(index,leafChild.getValues().get(indexOfKeyInLeaf));
+
+                leafChild.getKeys().remove(indexOfKeyInLeaf);
+                leafChild.getValues().remove(indexOfKeyInLeaf);
+
+
+                return true;
+
+
             }
 
-        /**
-         *
-         * when the node to be removed is not leaf so we have 2 cases
-         * replace it with maximum left key or minimum right key
-         *
-         * */
-            else if (!nodeContainingToBeRemovedKey.isLeaf()){
-                //when the node to be removed is noe leaf so we have 2 cases
-                //replace it with maximum left key or minimum right key
-                index = nodeContainingToBeRemovedKey.getKeys().indexOf(key);
-                IBTreeNode leafChild =null;
-                IBTreeNode leftChild =inOrderPredecessor(nodeContainingToBeRemovedKey,key);
-                IBTreeNode rightChild = inOrderSuccessor(nodeContainingToBeRemovedKey,key);
-                int indexOfKeyInLeaf=-1;
-                if ( leftChild.getKeys().size() > minDegree-1)   {
-                    leafChild =inOrderPredecessor(nodeContainingToBeRemovedKey,key);
-                    indexOfKeyInLeaf=leafChild.getKeys().size()-1;
-                }
-                else if (rightChild.getKeys().size() > minDegree-1 ) {
-                    leafChild = inOrderSuccessor(nodeContainingToBeRemovedKey, key);
-                    indexOfKeyInLeaf = 0;
-                }
-                if (leafChild!=null && leafChild.getKeys().size() > minDegree-1){
-                    //remove a key from non leaf node using  inOrderPredecessor or inOrderSuccessor
-                    nodeContainingToBeRemovedKey.getKeys().remove(index);
-                    nodeContainingToBeRemovedKey.getValues().remove(index);
+            //if non of Lc nor Rc has more than minimum number of keys ??
+            //we merge Rc and Lc then remove the p key
+            /**
+             * case where both RC and LC have less than minDegree
+             * we merge both left and right child in case those are leaf nodes
+             * */
+            else {
 
-                    nodeContainingToBeRemovedKey.getKeys().add(index,leafChild.getKeys().get(indexOfKeyInLeaf));
-                    nodeContainingToBeRemovedKey.getValues().add(index,leafChild.getValues().get(indexOfKeyInLeaf));
+                // this case is not working i should solve it's problem
+                node.getKeys().remove(index);
+                node.getValues().remove(index);
 
-                    leafChild.getKeys().remove(indexOfKeyInLeaf);
-                    leafChild.getValues().remove(indexOfKeyInLeaf);
+                node.getChildren().remove(index);
 
+                node.getChildren().set(index, merge(leftChild,rightChild));
 
-                    return true;
-
-
-                }
-
-                //if non of Lc nor Rc has more than minimum number of keys ??
-                //we merge Rc and Lc then remove the p key
-                /**
-                 * case where both RC and LC have less than minDegree
-                 * we merge both left and right child in case those are leaf nodes
-                 * */
-                else {
-
-                    // this case is not working i should solve it's problem
-                    nodeContainingToBeRemovedKey.getKeys().remove(index);
-                    nodeContainingToBeRemovedKey.getValues().remove(index);
-
-                    nodeContainingToBeRemovedKey.getChildren().remove(index);
-
-                    nodeContainingToBeRemovedKey.getChildren().set(index, merge(leftChild,rightChild));
-
-                    return true;
-                }
+                return true;
             }
+        }
 
-        return false;
+
+        return true;
     }
     public IBTreeNode inOrderSuccessor(IBTreeNode node,Comparable key){
         IBTreeNode temp =node;
@@ -546,18 +598,27 @@ public class Tree implements IBTree{
     }
 
     public void Show(IBTreeNode x) {
-        assert (x == null);
-        int i;
-        for ( i = 0; i < x.getNumOfKeys(); i++){
-            if(!x.isLeaf()){
-                Show((IBTreeNode) x.getChildren().get(i));
+        int level = 0;
+        Queue<IBTreeNode> nodes = new LinkedList<>();
+        Queue<Integer> levels = new LinkedList<>();
+        nodes.add(root);
+        levels.add(level);
+        System.out.print("Level 0: ");
+        while (!nodes.isEmpty()) {
+            IBTreeNode cur = nodes.poll();
+            int curlevel = levels.poll();
+
+            if (level < curlevel)  {
+                level = curlevel;
+                System.out.print("\nLevel " + level + ": ");
             }
-            System.out.print(" " +x.getKeys().get(i));
-            System.out.print(" " + x.getValues().get(i));
+            printNode(cur);
+            for (Object child: cur.getChildren()) {
+                nodes.add((IBTreeNode) child);
+                levels.add(level+1);
+            }
         }
-        if(!x.isLeaf()){
-            Show((IBTreeNode) x.getChildren().get(i));
-        }
+        System.out.println();
     }
 
     public IBTreeNode merge(IBTreeNode node1, IBTreeNode node2) {
@@ -574,11 +635,26 @@ public class Tree implements IBTree{
 
                 merged.getKeys().add(node1.getKeys().get(i));
                 merged.getValues().add(node1.getValues().get(i));
+                if (!node1.isLeaf()){
+
+                    merged.getChildren().add(node1.getChildren().get(i));
+
+                    merged.setLeaf(false);
+                }
+
                 i++;
                 continue;
             } else {
-                merged.getKeys().add(node2.getKeys().get(i));
-                merged.getValues().add(node2.getValues().get(i));
+                merged.getKeys().add(node2.getKeys().get(j));
+                merged.getValues().add(node2.getValues().get(j));
+
+                if (!node2.isLeaf())
+                {
+                    merged.getChildren().add(node2.getChildren().get(j));
+                    if (j == node2.getKeys().size()-1){
+                        merged.getChildren().add(node2.getChildren().get(j+1));
+                    }
+                }
                 j++;
                 continue;
 
@@ -586,13 +662,26 @@ public class Tree implements IBTree{
         }
 
         while ( i < node1.getKeys().size()){
+
             merged.getKeys().add(node1.getKeys().get(i));
             merged.getValues().add(node1.getValues().get(i));
+            if (!node1.isLeaf()){
+
+                merged.getChildren().add(node1.getChildren().get(i));
+            }
             i++;
         }
+
         while (j < node2.getKeys().size()){
             merged.getKeys().add(node2.getKeys().get(j));
             merged.getValues().add(node2.getValues().get(j));
+            if (!node2.isLeaf())
+            {
+                merged.getChildren().add(node2.getChildren().get(j));
+                if (j == node2.getKeys().size()-1){
+                    merged.getChildren().add(node2.getChildren().get(j+1));
+                }
+            }
             j++;
         }
 
@@ -608,142 +697,52 @@ public class Tree implements IBTree{
         }
         return null;
     }
+
+    public void print() {
+
+    }
+
+    private void printNode(IBTreeNode node) {
+        System.out.print("[");
+        for (Object key : node.getKeys())
+            System.out.print(key+",");
+        System.out.print("]");
+    }
+
     public static void main(String[] args) {
 
         IBTree tree = new Tree(2);
-        for(int i = 1 ; i < 23; i+=1){
+        for(int i = 2 ; i < 22; i+=2){
             tree.insert(i, "a"+i);
         }
 
-        /*
-        tree.insert(100, "tt");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(2, "uu");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(32, "y");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(3, "l");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(500, "yy");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(14, "rr");
-        tree.Show(tree.getRoot());
-        System.out.println();
-        tree.insert(1, "oo");
-        tree.insert(22222,"e");
-*/
 
         tree.Show(tree.getRoot());
+
       //  tree.insert(15,"Wfg");
 
+        System.out.println("Delete 4 ");
+        tree.delete(4);
+        tree.Show(tree.getRoot());
+        System.out.println("Delete 2 ");
+        tree.delete(2);
+        tree.Show(tree.getRoot());
+        System.out.println("Delete 20 ");
 
-        tree.delete(3);
-        tree.delete(7);
-
-        tree.delete(10);
         tree.delete(20);
+        tree.Show(tree.getRoot());
+        System.out.println("Delete 18 ");
+
+        tree.delete(18);
+        tree.Show(tree.getRoot());
+        System.out.println("Delete 16 ");
 
         tree.delete(16);
-
-        tree.insert(-1,"eeee");
-        tree.insert(-3,"ff");
-        tree.delete(2);
-        tree.delete(5);
-
-  /*      Tree tree=new Tree(3);
-
-        Node r = new Node(3);
-        tree.root=r;
-        List<String> keysRoot = new LinkedList<>();
-        keysRoot.add("f");
-        r.setKeys(keysRoot);
-
-
-        List<IBTreeNode> children =new LinkedList<>();
-
-        Node child1 =new Node(3);
-        List<String> keyschild1 = new LinkedList<>();
-        keyschild1.add("c");
-        child1.setKeys(keyschild1);
-
-        Node child2 =new Node(3);
-        List<String> keyschild2 = new LinkedList<>();
-        keyschild2.add("q");
-        child2.setKeys(keyschild2);
-
-        //////////////////////
-        Node child3 =new Node(3);
-        List<String> keyschild3 = new LinkedList<>();
-        keyschild3.add("0");
-        keyschild3.add("a");
-        child3.setKeys(keyschild3);
-
-
-        Node child4 =new Node(3);
-        List<String> keyschild4 = new LinkedList<>();
-        keyschild4.add("d");
-        keyschild4.add("e");
-        child4.setKeys(keyschild4);
-        List<IBTreeNode> children1 =new LinkedList<>();
+        tree.Show(tree.getRoot());
 
 
 
 
-        Node child5 =new Node(3);
-        List<String> keyschild5 = new LinkedList<>();
-        keyschild5.add("g");
-        child5.setKeys(keyschild5);
-
-
-        Node child6 =new Node(3);
-        List<String> keyschild6 = new LinkedList<>();
-
-        keyschild6.add("s");
-
-        child6.setKeys(keyschild6);
-
-        List<IBTreeNode> children2 =new LinkedList<>();
-
-        children2.clear();
-        children2.add(child5);
-        children2.add(child6);
-
-        child2.setChildren(children2);
-        children1.clear();
-        children1.add(child3);
-        children1.add(child4);
-
-        child1.setChildren(children1);
-
-        children.add(child1);
-        children.add(child2);
-        r.setChildren(children);
-
-      /*  System.out.println( tree.search("c"));
-        System.out.println( tree.search("a"));
-        System.out.println( tree.search("g"));
-        System.out.println( tree.search("e"));
-        System.out.println( tree.search("o"));*/
-
-/*
-        System.out.println( tree.search(9));
-        System.out.println( tree.search(3));
-        System.out.println( tree.search(10));
-        System.out.println( tree.search(5));
-        System.out.println( tree.search(15));
-        System.out.println( tree.search(-7));
-        System.out.println( tree.search(1));
-
-
-
-
-
-*/
 
     }
 }

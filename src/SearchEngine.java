@@ -3,10 +3,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -49,7 +46,7 @@ public class SearchEngine implements ISearchEngine{
             IBTree<String, Int> tree = new Tree(3);
             for(int c=0; c<contentArr.length; c++) {
                 Int rank = (Int) tree.tempSearch(contentArr[c]);
-                if(rank == null) tree.insert(contentArr[c], new Int(1));
+                if(rank == null) tree.insert(contentArr[c].toLowerCase(), new Int(1));
                 else rank.x++;
             }
             map.put(id, tree);
@@ -68,7 +65,7 @@ public class SearchEngine implements ISearchEngine{
         List<ISearchResult> resultList = new LinkedList<>();
         for(String key : map.keySet()) {
             ISearchResult result = new SearchResult();
-            Int rank = (Int) map.get(key).tempSearch(word);
+            Int rank = (Int) map.get(key).tempSearch(word.toLowerCase());
             if(rank != null) {
                 result.setRank(rank.x);
                 result.setId(key);
@@ -108,7 +105,7 @@ public class SearchEngine implements ISearchEngine{
         for(String word : wordArr) {
             for(String key : map.keySet()) {
                 ISearchResult result = new SearchResult();
-                Int rank = (Int) map.get(key).tempSearch(word);
+                Int rank = (Int) map.get(key).tempSearch(word.toLowerCase());
                 if(rank != null) {
                     result.setRank(rank.x);
                     result.setId(key);

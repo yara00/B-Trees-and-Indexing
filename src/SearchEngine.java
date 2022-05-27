@@ -67,14 +67,15 @@ public class SearchEngine implements ISearchEngine{
 
             for(int c=0; c<contentArr.length; c++) {
                 HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(contentArr[c].toLowerCase());
-
-                for(String key: map.keySet()) {
-                    if(key.equals(id)) {
-                        map.remove(key);
-                        break;
+                if (map != null) {
+                    for (String key : map.keySet()) {
+                        if (key.equals(id)) {
+                            map.remove(key);
+                            break;
+                        }
                     }
+                    // if (map.size() == 0) tree.delete(contentArr[c].toLowerCase());
                 }
-                if(map.size() == 0) tree.delete(contentArr[c].toLowerCase());
             }
         }
     }

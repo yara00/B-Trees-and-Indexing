@@ -12,12 +12,6 @@ import org.xml.sax.SAXException;
 // key --> word
 // hashmap --> value (id --> key rank --> value)
 public class SearchEngine implements ISearchEngine{
-    class Int{
-        public Integer x;
-        Int(Integer x) {
-            this.x = x;
-        }
-    }
 
     IBTree<String, HashMap<String, Integer>> tree = new Tree(4);
     // parse document content
@@ -118,15 +112,19 @@ public class SearchEngine implements ISearchEngine{
     @Override
     public List<ISearchResult> searchByMultipleWordWithRanking(String sentence) {
         List<ISearchResult> resultList = new LinkedList<>();
+        HashMap<String, Integer> res = new HashMap<>();
         String[] wordArr = sentence.split("\\W+");
         for(String word : wordArr) {
             HashMap<String, Integer> map = (HashMap<String, Integer>) tree.tempSearch(word.toLowerCase());
             for(String key : map.keySet()) {
-                ISearchResult result = new SearchResult();
-                result.setRank(map.get(key));
-                result.setId(key);
-                resultList.add(result);
+                res.merge(key,map.get(key), (a,b)-> a<b?a:b);
             }
+        }
+        for(String key: res.keySet()){
+            ISearchResult result = new SearchResult();
+            result.setRank(res.get(key));
+            result.setId(key);
+            resultList.add(result);
         }
         return resultList;
     }
